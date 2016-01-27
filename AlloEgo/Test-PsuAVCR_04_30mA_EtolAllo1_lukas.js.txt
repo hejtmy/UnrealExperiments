@@ -2,13 +2,12 @@
 //There are 8 start positions, 8 marks to designate goals.
 //Goal is positioned relative to the mark defined by the markaim 
 
-
-
 var changeRot = true;
 var misto = 0; // aktualni pozice v poli starts a marks 0-n
 
-var starts = [9 , 15,  7,  3, 3,  7, 15, 7 ]; // , 15, 12, 1, 16 seznam startu, jak jdou za sebou , 10, 8, 15, 14, 7
-var marks =  [11, 11, 11, 11, 9,  3, 13, 9 ]; // ,10, 13, 8, 12 seznam znacek jak jdou za sebou
+var starts = [9, 7,  8,  9, 7,  3, 12, 2 , 11, 7, 16, 14, 8, 6, 10, 4, 14];
+var marks =  [11, 11, 11, 11, 9,  3, 6, 15 , 10, 4, 2, 12, 10, 1, 10, 4, 12];
+
 var cpressed = false; // jestli uz bylo zmacknuto c - aby neslo zmacknout g pred c
 var fpressed = 0; // jestli uz zmacknuto f, aby druhe vypnulo zvuk
 var probetime = 60;
@@ -96,30 +95,26 @@ function run() {
 		sendLPT(0); // strobe off
 	}
 	if(key.pressed("g") && cpressed && fpressed > 0){
-	  // zmackne se pro dalsi fazi
-		preference.get("Aim"+getaim()).setActive(false); 
-		preference.get("Aim"+getaim()).setVisible(false);
-		preference.get("Aim"+getaim()).beepOff(true);
+		
 		nextphase();
 		//text.modify(2,""); //text 2 nepouzivam
 		text.modify(1,"dojdete ke startu a zmacknete C");
 	}
 	
 	if(key.pressed("v")) {
-		preference.get("Aim"+getaim()).SetVisible(!isVisible()); //hejtmanek solution - one liner
-		/* if(preference.get("Aim"+getaim()).isVisible()){
+		if(preference.get("Aim"+getaim()).isVisible()){
 			preference.get("Aim"+getaim()).setVisible(false);
 		} else {
 			preference.get("Aim"+getaim()).setVisible(true);
-		} */
+		}
 	}
 	if(key.pressed("o")){ // klavesu o budu pouzivat na ukazani startu
-		mark.get("Start"+starts[misto]).setVisible(!isVisible()); //hejtmanek solution - one liner
-		/* if(mark.get("Start"+starts[misto]).isVisible()){
+		
+		if(mark.get("Start"+starts[misto]).isVisible()){
 		  mark.get("Start"+starts[misto]).setVisible(false);
 		}  else {
 		  mark.get("Start"+starts[misto]).setVisible(true);
-		} */
+		}
   }
   
 }
