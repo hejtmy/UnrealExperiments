@@ -65,6 +65,7 @@ function run() {
 
 	if(key.pressed("f") && cpressed){
 		// zmackne se pri nalezeni cile, aby se objevil
+		mark.get("Mark"+marks[misto]).setVisible(true); //ukaze puvodní start
 		preference.get("Aim"+getaim()).setActive(true);
 		preference.get("Aim"+getaim()).setVisible(true);
 		preference.get("Aim"+getaim()).beepOff(fpressed>0);
@@ -101,7 +102,6 @@ function nextphase(){
 		mark.get("Start"+starts[misto]).setVisible(false); // deaktivuje puvodni start
 		dalsimisto();
 		cpressed = false;
-		
 		mark.get("Start"+starts[misto]).setVisible(true); // ukaze start
 		experiment.logToTrackLog("visible: Start"+starts[misto]);
 }
