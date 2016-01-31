@@ -6,7 +6,7 @@
 var changeRot = true;
 var misto = 0; // aktualni pozice v poli starts a marks 0-n
 
-var starts = [	7, 	7, 	7, 	7,	1, 13,	7,	5,	1,	9,	5,	15,	1,	7,	3,	11,	13,	9,	3,	13,	11,	5,	15,	11];
+var starts = [	7, 	5, 	3, 	9,	1, 13,	7,	5,	1,	9,	5,	15,	1,	7,	3,	11,	13,	9,	3,	13,	11,	5,	15,	11];
 var marks =  [	11,	11,	11, 11, 7, 5,	15,	11,	3,	15,	9, 15,	1,	13,	9,	11,	3,	1,	7,	5,	13,	9,	5,	1];
 
 var cpressed = false; // jestli uz bylo zmacknuto c - aby neslo zmacknout g pred c
