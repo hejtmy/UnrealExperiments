@@ -1,4 +1,4 @@
-//Experiment description
+﻿//Experiment description
 //	Basic egocentric text
 //	Goals are positioned relative to the starting poistion based on startaim variable
 
@@ -65,7 +65,7 @@ function run() {
 
 	if(key.pressed("f") && cpressed){
 		// zmackne se pri nalezeni cile, aby se objevil
-		mark.get("Mark"+marks[misto]).setVisible(true); //ukaze puvodní start
+		mark.get("Start"+starts[misto]).setVisible(true); //ukaze puvodní start
 		preference.get("Aim"+getaim()).setActive(true);
 		preference.get("Aim"+getaim()).setVisible(true);
 		preference.get("Aim"+getaim()).beepOff(fpressed>0);
