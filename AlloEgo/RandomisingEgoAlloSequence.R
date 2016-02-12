@@ -1,6 +1,10 @@
 #randomising eggo allo sequence
+#picks half trials from the fiven sequence
 set.seed(666)
-egoallo = c(rep("ego", 20),rep("allo", 20))
-final = sample(egoallo,replace=T)
-a = paste(shQuote(final,type="cmd"),collapse=",")
-cat(a)
+SelectAllocentricTrials  = function(int1,int2){
+	egoallo = c(int1:int2)
+	final = sample(egoallo,size = (length(egoallo)/2),replace=F)
+	a = paste(final,collapse=",")
+	return(a)
+}
+#first generation

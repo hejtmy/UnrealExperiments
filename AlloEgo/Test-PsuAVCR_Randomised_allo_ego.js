@@ -7,7 +7,7 @@ var trialIndex = 0; // aktualni pozice v poli starts a marks 0-n
 var currentGoal = 0;
 var starts = [	7, 	7, 	7, 	7, 	3, 11, 	3, 	7, 	15, 3, 	11, 15, 7, 	11, 1, 	11, 15, 9, 13,	 5, 9, 	1,	 5, 13, 7,	7, 	5, 	3, 	9,	1, 13,	7,	5,	1,	9,	5,	15,	1,	7,	3,	11,	13,	9,	3,	13,	11,	5,	15,	11];];// , 15, 12, 1, 16 seznam startu, jak jdou za sebou , 10, 8, 15, 14, 7
 var marks =  [	11,	11,	11, 11, 7, 5,	15,	11,	3,	15,	9, 	15,	1,	13,	9,	11,	3,	1,	7,	5,	13,	9,	5,	1];
-var egoallo = ["allo","ego","allo","ego","ego","allo","allo","ego","ego","ego","allo","ego","ego","ego","ego","allo","ego","allo","ego","ego","allo","allo","ego","ego","allo","ego","ego","allo","allo","allo","ego","ego","allo","allo","allo","ego","ego","allo","allo","allo"];
+var egoallo = [39,16,46,47,22,34,42,25,9,17,32,40,11,12,14,29,37,33,19,18];
 var allocentricRelation = 4; // vztah znacky a cil. Pozice cile se pocita mark + markaim
 var egocentricRelation = 6;
 
@@ -47,23 +47,23 @@ function run() {
 	}
 	
 	//happens everytime person reaches a goal
-	if(preference.get("Aim"+currentGoal()).entered()){
+	if (preference.get("Aim"+currentGoal()).entered()){
 		GoalEntered();
 	}
 
-	if(key.pressed("c") && !trialInitiated){ // zmackne se kdyz subjekt dojde na start 
+	if (key.pressed("c") && !trialInitiated){ // zmackne se kdyz subjekt dojde na start 
 		TrialStart();
 	}
 	// zmackne se pri nalezeni cile, aby se objevil
-	if(key.pressed("f") && trialInitiated && !trialFinished){
+	if (key.pressed("f") && trialInitiated && !trialFinished){
 		TrialFinish();
 	}
 	// zmackne se pro dalsi fazi
-	if(key.pressed("g") && trialInitiated && trialFinished){
+	if (key.pressed("g") &&  trialFinished){
 		NextTrial();
 	}
 	// zmackne se pro ukazani/skryti cile
-	if(key.pressed("v")) {
+	if (key.pressed("v")) {
 		if(preference.get("Aim"+currentGoal).isVisible()){
 			preference.get("Aim"+currentGoal).setVisible(false);
 		} else {
@@ -71,7 +71,7 @@ function run() {
 		}
 	}
 	// klavesu o budu pouzivat na ukazani startu
-	if(key.pressed("o")){ 
+	if (key.pressed("o")){ 
 		if(mark.get("Start"+starts[trialIndex]).isVisible()){
 			mark.get("Start"+starts[trialIndex]).setVisible(false);
 		}  else {
@@ -134,7 +134,9 @@ function TrialClose(){
 
 function NextTrial(){
 	TrialClose();
-	dalsimisto();
+	trialIndex ++;
+	CheckForExperimentEnd();
+	debug.log("trialIndex "+trialIndex+", starts.lenght "+starts.length);
 	TrialSetup();
 }
 
@@ -151,23 +153,24 @@ function GoalEntered(){
 		entered = true;
 	}
 	
-	TrialFinish
+	TrialFinish();
 }
 
 // vrati cislo aktualniho aim - podle globalnich promennych trialIndex a markaim
 function GetCurrentGoal() {
-	var goal = marks[trialIndex] + markaim;
+	if (egoallo[trialIndex] == "ego"){
+		var goal = starts[trialIndex] + egocentricRelation;
+	} else {
+		var goal = marks[trialIndex] + allocentricRelation;
+	}
 	if (goal > 16) {goal -= 16; }
 	if (goal < 0) {goal += 16; }
 	return goal;
 }
-function dalsimisto() {
-	trialIndex ++;
+function CheckForExperimentEnd() {
 	if (trialIndex >= starts.length) {
 		text.modify(1,"KONEC"); 
 		experiment.setStop();
-	} else {
-		debug.log("trialIndex "+trialIndex+", starts.lenght "+starts.length);
 	}
 }
 function skryjvse(){
@@ -187,7 +190,6 @@ function skryjvse(){
 	mark.get("hvezdazluta").setVisible(false); 
 	mark.get("hvezdamodra").setVisible(false);
 }
-
 function sendLPT(on){  //17.4.2015 - kvuli EEG synchronizaci
 	if(pouzitLPT){
 		if(on) {
