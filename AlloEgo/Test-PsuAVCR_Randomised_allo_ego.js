@@ -7,8 +7,10 @@ var trialIndex = 0; // aktualni pozice v poli starts a marks 0-n
 var currentGoal = 0;
 var starts = [	7, 	7, 	7, 	7, 	3, 11, 	3, 	7, 	15, 3, 	11, 15, 7, 	11, 1, 	11, 15, 9, 13,	 5, 9, 	1,	 5, 13, 7,	7, 	5, 	3, 	9,	1, 13,	7,	5,	1,	9,	5,	15,	1,	7,	3,	11,	13,	9,	3,	13,	11,	5,	15,	11];];// , 15, 12, 1, 16 seznam startu, jak jdou za sebou , 10, 8, 15, 14, 7
 var marks =  [	11,	11,	11, 11, 7, 5,	15,	11,	3,	15,	9, 	15,	1,	13,	9,	11,	3,	1,	7,	5,	13,	9,	5,	1];
-var egoallo = [39,16,46,47,22,34,42,25,9,17,32,40,11,12,14,29,37,33,19,18];
+var egoallo = ["ego","allo","ego","allo","allo","allo","ego","allo","ego","allo","ego","allo","ego","allo","ego","ego","allo","allo","allo","ego","ego","ego","allo","ego","ego","allo","ego","allo","ego","ego","ego","allo","ego","allo","allo","ego","ego","allo","allo","allo"];
 var allocentricRelation = 4; // vztah znacky a cil. Pozice cile se pocita mark + markaim
+var trialType = "";
+var allocentricTrialIndex = 0; //important as the marks have different size then starts - used in GetCurrentGoal()
 var egocentricRelation = 6;
 
 var trialInitiated = false; // jestli uz bylo zmacknuto c - aby neslo zmacknout g pred c
@@ -93,17 +95,16 @@ function TrialStart(){
 	// skryje start, ukaze znacku a aktivuje cil
 	mark.get("Start"+starts[trialIndex]).setVisible(false); // skryje start
 	experiment.logToTrackLog("hidden: Start"+starts[trialIndex]);
-	mark.get("Mark"+marks[trialIndex]).setVisible(true); // ukaze znacku
+	if (GetTrialType() == "allo"){
+		mark.get("Mark"+marks[trialIndex]).setVisible(true); // ukaze znacku
+	}
 	experiment.logToTrackLog("visible: Mark"+marks[trialIndex]);
 	preference.get("Aim"+currentGoal).setActive(true); // aktivuje cil
+	
 	//timer.set("timelimit"+trialIndex,60);     // zadny casovy limit
 	
-	preference.get("Aim"+currentGoal).setVisible(false); // possibly duplicit
-	preference.get("Aim"+currentGoal).beepOff(true);    // possibly duplicit
-	
-
 	text.modify(1,"Najdete co nejrychleji cil");
-	text.modify(3,(trialIndex+1)+"/"+starts.length);
+	text.modify(3,(trialIndex+1) + "/" + starts.length);
 	casC = new Date().getTime() / 1000;
 	debug.log("cas C: "+casC);
 	
@@ -115,7 +116,7 @@ function TrialStart(){
 function TrialFinish(){
 	preference.get("Aim"+currentGoal).setActive(true);     // aby piskal az tam clovek dojde
 	preference.get("Aim"+currentGoal).setVisible(true);
-	preference.get("Aim"+currentGoal).beepOff(trialFinished);      // aby piskal az tam clovek dojde
+	preference.get("Aim"+currentGoal).beepOff(false);      // aby piskal az tam clovek dojde
 	
 	trialFinished = true;
 	sendLPT(0);
@@ -126,7 +127,9 @@ function TrialClose(){
 	preference.get("Aim"+currentGoal).setActive(false); 
 	preference.get("Aim"+currentGoal).setVisible(false);
 	preference.get("Aim"+currentGoal).beepOff(true);
-	mark.get("Mark"+marks[trialIndex]).setVisible(false); // skryje znacku 
+	if (GetTrialType() == "allo"){
+		mark.get("Mark"+marks[trialIndex]).setVisible(false); // skryje znacku 
+	}
 	
 	preference.get("Aim"+currentGoal).setVisible(false);
 	preference.get("Aim"+currentGoal).beepOff(true);
@@ -156,16 +159,19 @@ function GoalEntered(){
 	TrialFinish();
 }
 
-// vrati cislo aktualniho aim - podle globalnich promennych trialIndex a markaim
 function GetCurrentGoal() {
-	if (egoallo[trialIndex] == "ego"){
+	if (GetTrialType() == "ego"){
 		var goal = starts[trialIndex] + egocentricRelation;
 	} else {
-		var goal = marks[trialIndex] + allocentricRelation;
+		var goal = marks[allocentricTrial] + allocentricRelation;
+		allocentricTrial++;
 	}
 	if (goal > 16) {goal -= 16; }
 	if (goal < 0) {goal += 16; }
 	return goal;
+}
+function GetTrialType(){
+	return egoallo[trialIndex];
 }
 function CheckForExperimentEnd() {
 	if (trialIndex >= starts.length) {
