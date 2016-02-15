@@ -1,16 +1,15 @@
 //Experiment description
 //There are total od 48 goals. IN the beginning they are set 
-//Goal is positioned relative to the mark defined by the markaim and its really close to it - basically CuedTask inBVA
-
+//Goal is positioned relative to the  defined by the markaim and its really close to it - basically CuedTask inBVA
 var changeRot = true;
 var trialIndex = 0; // aktualni pozice v poli starts a marks 0-n
 var currentGoal = 0;
-var starts = [	7, 	7, 	7, 	7, 	3, 11, 	3, 	7, 	15, 3, 	11, 15, 7, 	11, 1, 	11, 15, 9, 13,	 5, 9, 	1,	 5, 13, 7,	7, 	5, 	3, 	9,	1, 13,	7,	5,	1,	9,	5,	15,	1,	7,	3,	11,	13,	9,	3,	13,	11,	5,	15,	11];];// , 15, 12, 1, 16 seznam startu, jak jdou za sebou , 10, 8, 15, 14, 7
+var starts = [	4, 	7, 	2, 	11, 3, 11, 	3, 	7, 	15, 3, 	11, 15, 7, 	11, 1, 	11, 15, 9, 13,	 5, 9, 	1,	 5, 13, 7,	7, 	5, 	3, 	9,	1, 13,	7,	5,	1,	9,	5,	15,	1,	7,	3,	11,	13,	9,	3,	13,	11,	5,	15,	11];// , 15, 12, 1, 16 seznam startu, jak jdou za sebou , 10, 8, 15, 14, 7
 var marks =  [	11,	11,	11, 11, 7, 5,	15,	11,	3,	15,	9, 	15,	1,	13,	9,	11,	3,	1,	7,	5,	13,	9,	5,	1];
-var egoallo = ["ego","allo","ego","allo","allo","allo","ego","allo","ego","allo","ego","allo","ego","allo","ego","ego","allo","allo","allo","ego","ego","ego","allo","ego","ego","allo","ego","allo","ego","ego","ego","allo","ego","allo","allo","ego","ego","allo","allo","allo"];
+var egoallo = ["ego","ego","ego","ego","allo","allo","allo","allo","ego","allo","ego","allo","allo","allo","ego","allo","ego","allo","ego","allo","ego","allo","ego","ego","allo","allo","allo","ego","ego","ego","allo","ego","ego","allo","ego","allo","ego","ego","ego","allo","ego","allo","allo","ego","ego","allo","allo","allo"];
 var allocentricRelation = 4; // vztah znacky a cil. Pozice cile se pocita mark + markaim
 var trialType = "";
-var allocentricTrialIndex = 0; //important as the marks have different size then starts - used in GetCurrentGoal()
+var allocentricTrialIndex = -1; //important as the marks have different size then starts - used in GetCurrentGoal(), negative as we increment when the experiment starts
 var egocentricRelation = 6;
 
 var trialInitiated = false; // jestli uz bylo zmacknuto c - aby neslo zmacknout g pred c
@@ -25,34 +24,24 @@ var casysum = 0;
 var pouzitLPT = 1; // muzu zapis do paralelniho portu vypnout
 var LPTadresa = 0x378; //0x2FF8
 
+var pouzitLPT = false;
+
 function init() {
-	experiment.setMap("Test-PsuAVCR_04_30mA_cil AlloEgo");
+	experiment.setMap("Test-PsuAVCR_04_30mA_cil_AlloEgo_lukas");
 }
 
 function run() {
 	if (experiment.isStarted()){
-		//basic setup
-		experiment.setCollisionCylinder(20,200);
-		experiment.setWalk(true);
-		experiment.setTrackRate(0.05);
-		experiment.setPlayerSpeed(3000);
-		platform.get("plosina").doRotateTime(0,0,1);
-		text.create(1, 10, 10, 255, 255,0, 3, "dojdete ke startu a zmacknete C"); // nazev aktivniho mista - zluta
-		text.create(2, 800, 10, 255, 255,255, 3, ""); // cas do cile
-		text.create(3, 10, 70, 255, 255,0, 2, "1/"+starts.length); // cislo trialu
-		skryjvse();
-
-		//gets pushed forward by one by nextphase
-		trialIndex = -1;
+		Setup();
+		trialIndex = 0;
 		TrialSetup();
-		sendLPT(0);   // strobe off
+		sendLPT(0);
 	}
 	
 	//happens everytime person reaches a goal
-	if (preference.get("Aim"+currentGoal()).entered()){
+	if (preference.get("Aim"+currentGoal).entered()){
 		GoalEntered();
 	}
-
 	if (key.pressed("c") && !trialInitiated){ // zmackne se kdyz subjekt dojde na start 
 		TrialStart();
 	}
@@ -81,12 +70,15 @@ function run() {
 		}
 	} 
 	if (key.pressed("p")){
-			preference.get("Aim"+currentGoal).beepOff(true);    
+		PlaySound("GoalFound");
 	}
+	
+	//if at any time the time to the goal is larger than 30 s we display it
+	if ((new Date().getTime() / 1000 - casC) > 60) {preference.get("Aim"+currentGoal).setVisible(true)};
 }
-
 function TrialSetup(){
-	text.modify(1,"Dojdete ke startu a spustte trial klavesou C");
+  trialInitiated = false;
+	text.modify(1,"Dojdete ke startu a stisknete C");
 	mark.get("Start"+starts[trialIndex]).setVisible(true); // show start start
 	experiment.logToTrackLog("visible: Start"+starts[trialIndex]);
 	currentGoal = GetCurrentGoal();
@@ -96,9 +88,9 @@ function TrialStart(){
 	mark.get("Start"+starts[trialIndex]).setVisible(false); // skryje start
 	experiment.logToTrackLog("hidden: Start"+starts[trialIndex]);
 	if (GetTrialType() == "allo"){
-		mark.get("Mark"+marks[trialIndex]).setVisible(true); // ukaze znacku
+		mark.get("Mark"+marks[allocentricTrialIndex]).setVisible(true); // ukaze znacku
 	}
-	experiment.logToTrackLog("visible: Mark"+marks[trialIndex]);
+	experiment.logToTrackLog("visible: Mark"+marks[allocentricTrialIndex]);
 	preference.get("Aim"+currentGoal).setActive(true); // aktivuje cil
 	
 	//timer.set("timelimit"+trialIndex,60);     // zadny casovy limit
@@ -107,32 +99,26 @@ function TrialStart(){
 	text.modify(3,(trialIndex+1) + "/" + starts.length);
 	casC = new Date().getTime() / 1000;
 	debug.log("cas C: "+casC);
-	
 	sendLPT(1);
 	entered = false;
 	trialInitiated = true;
 	trialFinished = false;
 }
 function TrialFinish(){
-	preference.get("Aim"+currentGoal).setActive(true);     // aby piskal az tam clovek dojde
-	preference.get("Aim"+currentGoal).setVisible(true);
-	preference.get("Aim"+currentGoal).beepOff(false);      // aby piskal az tam clovek dojde
-	
-	trialFinished = true;
 	sendLPT(0);
-}
-
-function TrialClose(){
-	//inactivates previous goals
-	preference.get("Aim"+currentGoal).setActive(false); 
-	preference.get("Aim"+currentGoal).setVisible(false);
-	preference.get("Aim"+currentGoal).beepOff(true);
-	if (GetTrialType() == "allo"){
-		mark.get("Mark"+marks[trialIndex]).setVisible(false); // skryje znacku 
+  text.modify(1,"Cil nalezen!");
+	preference.get("Aim"+currentGoal).setVisible(true);
+	if (GetTrialType() == "ego"){
+		mark.get("Start"+marks[trialIndex]).setVisible(true); // ukaze start
 	}
-	
-	preference.get("Aim"+currentGoal).setVisible(false);
-	preference.get("Aim"+currentGoal).beepOff(true);
+	PlaySound("GoalFound");
+	//preference.get("Aim"+currentGoal).beepOff(false);      // aby piskal az tam clovek dojde
+	trialFinished = true;
+  casEnter = Math.ceil(new Date().getTime()/ 1000 - casC);
+	debug.log("cast vstupu: "+casEnter);
+	casysum += casEnter;
+	text.modify(2,casEnter+" s");
+	text.modify(3,(trialIndex+1)+"/"+starts.length+", " + "prumerny cas: " + Math.ceil(casysum/(trialIndex+1)) + " s");
 }
 
 function NextTrial(){
@@ -143,28 +129,32 @@ function NextTrial(){
 	TrialSetup();
 }
 
-function GoalEntered(){
-	
-	preference.get("Aim"+currentGoal).beep(1);
-	text.modify(1,"Cil nalezen!");
-	if(entered==false){
-		casEnter = Math.ceil(new Date().getTime()/ 1000 - casC);
-		debug.log("cast vstupu: "+casEnter);
-		casysum += casEnter;
-		text.modify(2,casEnter+" s");
-		text.modify(3,(trialIndex+1)+"/"+starts.length+", " + "prumerny cas: " + Math.ceil(casysum/(trialIndex+1)) + " s");
-		entered = true;
+function TrialClose(){
+	//inactivates previous goals
+	preference.get("Aim"+currentGoal).setActive(false); 
+	preference.get("Aim"+currentGoal).setVisible(false);
+	preference.get("Aim"+currentGoal).beepOff(true);
+	if (GetTrialType() == "allo"){
+		mark.get("Mark"+marks[allocentricTrialIndex]).setVisible(false); // skryje znacku 
 	}
-	
-	TrialFinish();
+	preference.get("Aim"+currentGoal).setVisible(false);
+	preference.get("Aim"+currentGoal).beepOff(true);
 }
 
+function GoalEntered(){
+	if(entered==false){
+	 TrialFinish();
+	 preference.get("Aim"+currentGoal).beep(1);
+	 entered = true;
+	}
+}
 function GetCurrentGoal() {
 	if (GetTrialType() == "ego"){
 		var goal = starts[trialIndex] + egocentricRelation;
 	} else {
-		var goal = marks[allocentricTrial] + allocentricRelation;
-		allocentricTrial++;
+	  allocentricTrialIndex++;
+		var goal = marks[allocentricTrialIndex] + allocentricRelation;
+		
 	}
 	if (goal > 16) {goal -= 16; }
 	if (goal < 0) {goal += 16; }
@@ -179,6 +169,17 @@ function CheckForExperimentEnd() {
 		experiment.setStop();
 	}
 }
+function Setup(){
+	experiment.setCollisionCylinder(20,200);
+	experiment.setWalk(true);
+	experiment.setTrackRate(0.05);
+	experiment.setPlayerSpeed(3000);
+	platform.get("plosina").doRotateTime(0,0,1);
+	skryjvse();
+	text.create(1, 10, 10, 255, 255,0, 3, ""); //Messages for the participant
+	text.create(2, 800, 10, 255, 255,255, 3, ""); // cas do cile
+	text.create(3, 10, 70, 255, 255,0, 2, ""); // cislo trialu
+}
 function skryjvse(){
 	for(i = 1; i <= 16; i++){
 		mark.get("Mark"+i).setVisible(false);	
@@ -188,7 +189,7 @@ function skryjvse(){
 		mark.get("Start"+i).setVisible(false);	
 		mark.get("Start"+i).setActive(false);
 		mark.get("Start"+i).setAttached(false);
-		  
+		
 		preference.get("Aim"+i).setVisible(false);
 		preference.get("Aim"+i).setActive(false);
 		preference.get("Aim"+i).setAttached(false);
@@ -196,6 +197,7 @@ function skryjvse(){
 	mark.get("hvezdazluta").setVisible(false); 
 	mark.get("hvezdamodra").setVisible(false);
 }
+
 function sendLPT(on){  //17.4.2015 - kvuli EEG synchronizaci
 	if(pouzitLPT){
 		if(on) {
@@ -208,4 +210,11 @@ function sendLPT(on){  //17.4.2015 - kvuli EEG synchronizaci
 			debug.log("LPT strobe off");
 		} 
 	}
+}
+
+function PlaySound(what){
+  if (what == "GoalFound"){
+    mark.get("SoundGoalFound").beepOff(true);
+    mark.get("SoundGoalFound").beep(1);
+  }
 }
