@@ -26,6 +26,9 @@ var LPTadresa = 0x378; //0x2FF8
 
 var pouzitLPT = false;
 
+var timeStart = 0;
+
+var numberenter = 0;
 function init() {
 	experiment.setMap("Test-PsuAVCR_04_30mA_cil_AlloEgo_lukas");
 }
@@ -34,7 +37,9 @@ function run() {
 	if (experiment.isStarted()){
 		Setup();
 		trialIndex = 0;
+		allocentricTrialIndex = -1;
 		TrialSetup();
+		timeStart = new Date().getTime() / 1000;
 		sendLPT(0);
 	}
 	
@@ -72,33 +77,33 @@ function run() {
 	if (key.pressed("p")){
 		PlaySound("GoalFound");
 	}
-	
+	text.modify(2,allocentricTrialIndex)
+	text.modify(3,trialIndex)
 	//if at any time the time to the goal is larger than 30 s we display it
-	if ((new Date().getTime() / 1000 - casC) > 60) {preference.get("Aim"+currentGoal).setVisible(true)};
+	if ((new Date().getTime() / 1000 - timeStart) > 60) {preference.get("Aim"+currentGoal).setVisible(true)};
 }
 function TrialSetup(){
   trialInitiated = false;
 	text.modify(1,"Dojdete ke startu a stisknete C");
 	mark.get("Start"+starts[trialIndex]).setVisible(true); // show start start
-	experiment.logToTrackLog("visible: Start"+starts[trialIndex]);
+	//experiment.logToTrackLog("visible: Start"+starts[trialIndex]);
 	currentGoal = GetCurrentGoal();
 }
 function TrialStart(){
-	// skryje start, ukaze znacku a aktivuje cil
-	mark.get("Start"+starts[trialIndex]).setVisible(false); // skryje start
-	experiment.logToTrackLog("hidden: Start"+starts[trialIndex]);
 	if (GetTrialType() == "allo"){
-		mark.get("Mark"+marks[allocentricTrialIndex]).setVisible(true); // ukaze znacku
+    PlaySound("StartTrialAllo"); // ukaze znacku
+	} else { PlaySound("StartTrialEgo");}
+  
+	mark.get("Start"+starts[trialIndex]).setVisible(false); // skryje start
+	if (GetTrialType() == "allo"){
+    mark.get("Mark"+marks[allocentricTrialIndex]).setVisible(true); // ukaze znacku
 	}
-	experiment.logToTrackLog("visible: Mark"+marks[allocentricTrialIndex]);
 	preference.get("Aim"+currentGoal).setActive(true); // aktivuje cil
-	
-	//timer.set("timelimit"+trialIndex,60);     // zadny casovy limit
 	
 	text.modify(1,"Najdete co nejrychleji cil");
 	text.modify(3,(trialIndex+1) + "/" + starts.length);
-	casC = new Date().getTime() / 1000;
-	debug.log("cas C: "+casC);
+	timeStart = new Date().getTime() / 1000;
+	debug.log("time since start: "+timeStart);
 	sendLPT(1);
 	entered = false;
 	trialInitiated = true;
@@ -106,18 +111,15 @@ function TrialStart(){
 }
 function TrialFinish(){
 	sendLPT(0);
-  text.modify(1,"Cil nalezen!");
-	preference.get("Aim"+currentGoal).setVisible(true);
-	if (GetTrialType() == "ego"){
-		mark.get("Start"+marks[trialIndex]).setVisible(true); // ukaze start
-	}
-	PlaySound("GoalFound");
-	//preference.get("Aim"+currentGoal).beepOff(false);      // aby piskal az tam clovek dojde
 	trialFinished = true;
-  casEnter = Math.ceil(new Date().getTime()/ 1000 - casC);
-	debug.log("cast vstupu: "+casEnter);
-	casysum += casEnter;
-	text.modify(2,casEnter+" s");
+	preference.get("Aim"+currentGoal).setVisible(true);
+	if (GetTrialType() == "ego"){mark.get("Start"+starts[trialIndex]).setVisible(true);} // ukaze start
+	timeFinish = Math.ceil(new Date().getTime()/ 1000 - timeStart);
+	debug.log("cast vstupu: "+timeFinish);
+	casysum += timeFinish;
+	PlaySound("GoalFound");
+  text.modify(1,"Cil nalezen!");
+	text.modify(2,timeFinish+" s");
 	text.modify(3,(trialIndex+1)+"/"+starts.length+", " + "prumerny cas: " + Math.ceil(casysum/(trialIndex+1)) + " s");
 }
 
@@ -133,18 +135,13 @@ function TrialClose(){
 	//inactivates previous goals
 	preference.get("Aim"+currentGoal).setActive(false); 
 	preference.get("Aim"+currentGoal).setVisible(false);
-	preference.get("Aim"+currentGoal).beepOff(true);
-	if (GetTrialType() == "allo"){
-		mark.get("Mark"+marks[allocentricTrialIndex]).setVisible(false); // skryje znacku 
-	}
-	preference.get("Aim"+currentGoal).setVisible(false);
-	preference.get("Aim"+currentGoal).beepOff(true);
+	if (GetTrialType() == "ego"){mark.get("Start"+starts[trialIndex]).setVisible(false);}
+	if (GetTrialType() == "allo"){mark.get("Mark"+marks[allocentricTrialIndex]).setVisible(false);}
 }
 
 function GoalEntered(){
 	if(entered==false){
 	 TrialFinish();
-	 preference.get("Aim"+currentGoal).beep(1);
 	 entered = true;
 	}
 }
@@ -193,6 +190,8 @@ function skryjvse(){
 		preference.get("Aim"+i).setVisible(false);
 		preference.get("Aim"+i).setActive(false);
 		preference.get("Aim"+i).setAttached(false);
+		
+		preference.get("Aim"+i).beepOff(true);
 	}
 	mark.get("hvezdazluta").setVisible(false); 
 	mark.get("hvezdamodra").setVisible(false);
@@ -214,7 +213,15 @@ function sendLPT(on){  //17.4.2015 - kvuli EEG synchronizaci
 
 function PlaySound(what){
   if (what == "GoalFound"){
-    mark.get("SoundGoalFound").beepOff(true);
+    mark.get("SoundGoalFound").beepOff(false);
     mark.get("SoundGoalFound").beep(1);
+  }
+  if (what == "StartTrialAllo") {
+    mark.get("StartingBeeper").beepOff(false);
+    mark.get("StartingBeeper").beep(0.75);
+  }
+  if (what == "StartTrialEgo") {
+    mark.get("StartingBeeper").beepOff(false);
+    mark.get("StartingBeeper").beep(0.25);
   }
 }
