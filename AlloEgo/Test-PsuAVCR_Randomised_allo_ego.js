@@ -4,7 +4,7 @@
 var changeRot = true;
 var trialIndex = 0; // aktualni pozice v poli starts a marks 0-n
 var currentGoal = 0;
-var starts = [	4, 	7, 	2, 	11, 3, 11, 	3, 	7, 	15, 3, 	11, 15, 7, 	11, 1, 	11, 15, 9, 13,	 5, 9, 	1,	 5, 13, 7,	7, 	5, 	3, 	9,	1, 13,	7,	5,	1,	9,	5,	15,	1,	7,	3,	11,	13,	9,	3,	13,	11,	5,	15,	11];// , 15, 12, 1, 16 seznam startu, jak jdou za sebou , 10, 8, 15, 14, 7
+var starts = [	4, 	7, 	2, 	11, 3, 11, 	3, 	7, 	15, 3, 	11, 15, 7, 	11, 1, 	11, 15, 9, 13,	5, 9, 	1,	 5, 13, 7,	7, 	5, 	3, 	9,	1, 13,	7,	5,	1,	9,	5,	15,	1,	7,	3,	11,	13,	9,	3,	13,	11,	5,	15];// , 15, 12, 1, 16 seznam startu, jak jdou za sebou , 10, 8, 15, 14, 7
 var marks =  [	11,	11,	11, 11, 7, 5,	15,	11,	3,	15,	9, 	15,	1,	13,	9,	11,	3,	1,	7,	5,	13,	9,	5,	1];
 var egoallo = ["ego","ego","ego","ego","allo","allo","allo","allo","ego","allo","ego","allo","allo","allo","ego","allo","ego","allo","ego","allo","ego","allo","ego","ego","allo","allo","allo","ego","ego","ego","allo","ego","ego","allo","ego","allo","ego","ego","ego","allo","ego","allo","allo","ego","ego","allo","allo","allo"];
 var allocentricRelation = 4; // vztah znacky a cil. Pozice cile se pocita mark + markaim
@@ -25,6 +25,7 @@ var pouzitLPT = 1; // muzu zapis do paralelniho portu vypnout
 var LPTadresa = 0x378; //0x2FF8
 
 var pouzitLPT = false;
+
 
 var timeStart = 0;
 
@@ -77,8 +78,7 @@ function run() {
 	if (key.pressed("p")){
 		PlaySound("GoalFound");
 	}
-	text.modify(2,allocentricTrialIndex)
-	text.modify(3,trialIndex)
+	
 	//if at any time the time to the goal is larger than 30 s we display it
 	if ((new Date().getTime() / 1000 - timeStart) > 60) {preference.get("Aim"+currentGoal).setVisible(true)};
 }
@@ -93,17 +93,14 @@ function TrialStart(){
 	if (GetTrialType() == "allo"){
     PlaySound("StartTrialAllo"); // ukaze znacku
 	} else { PlaySound("StartTrialEgo");}
-  
-	mark.get("Start"+starts[trialIndex]).setVisible(false); // skryje start
-	if (GetTrialType() == "allo"){
-    mark.get("Mark"+marks[allocentricTrialIndex]).setVisible(true); // ukaze znacku
-	}
-	preference.get("Aim"+currentGoal).setActive(true); // aktivuje cil
+  text.modify(1,"Najdete co nejrychleji cil");
+	text.modify(3,"");
 	
-	text.modify(1,"Najdete co nejrychleji cil");
-	text.modify(3,(trialIndex+1) + "/" + starts.length);
+	mark.get("Start"+starts[trialIndex]).setVisible(false); // skryje start
+	if (GetTrialType() == "allo"){mark.get("Mark"+marks[allocentricTrialIndex]).setVisible(true);} // ukaze znacku
+	preference.get("Aim"+currentGoal).setActive(true); // aktivuje cil
+
 	timeStart = new Date().getTime() / 1000;
-	debug.log("time since start: "+timeStart);
 	sendLPT(1);
 	entered = false;
 	trialInitiated = true;
@@ -114,13 +111,16 @@ function TrialFinish(){
 	trialFinished = true;
 	preference.get("Aim"+currentGoal).setVisible(true);
 	if (GetTrialType() == "ego"){mark.get("Start"+starts[trialIndex]).setVisible(true);} // ukaze start
+	
 	timeFinish = Math.ceil(new Date().getTime()/ 1000 - timeStart);
-	debug.log("cast vstupu: "+timeFinish);
 	casysum += timeFinish;
+	averageTime =  Math.ceil(casysum/(trialIndex+1));
+	timeDifference = timeFinish - averageTime;
 	PlaySound("GoalFound");
-  text.modify(1,"Cil nalezen!");
-	text.modify(2,timeFinish+" s");
-	text.modify(3,(trialIndex+1)+"/"+starts.length+", " + "prumerny cas: " + Math.ceil(casysum/(trialIndex+1)) + " s");
+	
+	text.modify(1,"Cil nalezen");
+	text.modify(3,timeFinish + "s : " + timeDifference + " s");
+	text.modify(1,"Opakovani " + (trialIndex+1)+ "/" + starts.length +", " + "prumerny cas: " + averageTime + " s");
 }
 
 function NextTrial(){
